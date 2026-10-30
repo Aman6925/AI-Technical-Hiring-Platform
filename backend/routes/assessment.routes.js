@@ -3,6 +3,14 @@ const express = require("express");
 const router = express.Router();
 
 const {
+    addQuestion,
+    getAssessmentQuestions,
+    getQuestionById,
+    updateQuestion,
+    deleteQuestion
+} = require("../controllers/question.controller");
+
+const {
     createAssessment,
     getAllAssessments,
     getAssessmentById,
@@ -52,6 +60,46 @@ router.delete(
     protect,
     authorizeRoles("recruiter"),
     deleteAssessment
+);
+
+// Add Question to Assessment - Recruiter Only
+router.post(
+    "/:assessmentId/questions",
+    protect,
+    authorizeRoles("recruiter"),
+    addQuestion
+);
+
+// Get All Questions of an Assessment - Recruiter Only
+router.get(
+    "/:assessmentId/questions",
+    protect,
+    authorizeRoles("recruiter"),
+    getAssessmentQuestions
+);
+
+// Get Single Question - Recruiter Only
+router.get(
+    "/:assessmentId/questions/:questionId",
+    protect,
+    authorizeRoles("recruiter"),
+    getQuestionById
+);
+
+// Update Question - Recruiter Only
+router.put(
+    "/:assessmentId/questions/:questionId",
+    protect,
+    authorizeRoles("recruiter"),
+    updateQuestion
+);
+
+// Delete Question - Recruiter Only
+router.delete(
+    "/:assessmentId/questions/:questionId",
+    protect,
+    authorizeRoles("recruiter"),
+    deleteQuestion
 );
 
 module.exports = router;
