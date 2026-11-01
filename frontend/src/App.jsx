@@ -1,11 +1,15 @@
 import CreateAssessment from "./pages/recruiter/CreateAssessment";
 import { Routes, Route, Link } from "react-router-dom";
 import AssessmentList from "./pages/recruiter/AssessmentList";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
-import CandidateDashboard from "./pages/candidate/CandidateDashboard";
+import Login from "./pages/auth/login";
+import Register from "./pages/auth/register";
+import RecruiterDashboard from "./pages/recruiter/RecruiterDashBoard";
+import CandidateDashboard from "./pages/candidate/CandidateDashBoard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import EditAssessment from "./pages/recruiter/EditAssessment";
+import CreateQuestion from "./pages/recruiter/CreateQuestion";
+import QuestionList from "./pages/recruiter/QuestionList";
+import EditQuestion from "./pages/recruiter/EditQuestion";
 
 function Home() {
   return (
@@ -72,10 +76,46 @@ function App() {
       />
 
       <Route
+        path="/recruiter/assessments/:assessmentId/edit"
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]}>
+            <EditAssessment />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/candidate/dashboard"
         element={
           <ProtectedRoute allowedRoles={["candidate"]}>
             <CandidateDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/recruiter/assessments/:assessmentId/questions/create"
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]}>
+            <CreateQuestion />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/recruiter/assessments/:assessmentId/questions"
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]}>
+            <QuestionList />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/recruiter/assessments/:assessmentId/questions/:questionId/edit"
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]}>
+            <EditQuestion />
           </ProtectedRoute>
         }
       />
@@ -84,6 +124,5 @@ function App() {
 }
 
 export default App;
-
 
 

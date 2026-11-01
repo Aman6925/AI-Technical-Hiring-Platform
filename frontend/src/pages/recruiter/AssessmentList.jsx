@@ -1,10 +1,18 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, FileText, Trash2, PlusCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Trash2,
+  PlusCircle,
+  Pencil,
+} from "lucide-react";
+
 import {
   getAssessments,
   deleteAssessment,
+  updateAssessment,
 } from "../../services/assessmentService";
 
 function AssessmentList() {
@@ -53,6 +61,31 @@ function AssessmentList() {
     }
   };
 
+  const handleStatusChange = async (assessmentId, newStatus) => {
+    try {
+      setError("");
+
+      const response = await updateAssessment(assessmentId, {
+        status: newStatus,
+      });
+
+      if (response.success) {
+        setAssessments((prev) =>
+          prev.map((assessment) =>
+            assessment._id === assessmentId
+              ? { ...assessment, status: newStatus }
+              : assessment
+          )
+        );
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Failed to update assessment status."
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="bg-slate-950 text-white px-8 py-5">
@@ -70,9 +103,7 @@ function AssessmentList() {
               Back to Dashboard
             </Link>
 
-            <h2 className="text-3xl font-bold">
-              My Assessments
-            </h2>
+            <h2 className="text-3xl font-bold">My Assessments</h2>
 
             <p className="text-slate-500 mt-2">
               View and manage your technical assessments.
@@ -152,14 +183,69 @@ function AssessmentList() {
                   </div>
                 </div>
 
-                <div className="border-t mt-6 pt-4 flex justify-end">
-                  <button
-                    onClick={() => handleDelete(assessment._id)}
-                    className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+                <div className="border-t mt-6 pt-4 flex flex-wrap justify-between items-center gap-3">
+                  <Link
+                    to={`/recruiter/assessments/${assessment._id}/edit`}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
                   >
-                    <Trash2 size={17} />
-                    Delete
-                  </button>
+                    Edit
+                  </Link>
+
+                  <Link
+                    to={`/recruiter/assessments/${assessment._id}/questions/create`}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                  >
+                    Add Question
+                  </Link>
+
+                  <Link
+                    to={`/recruiter/assessments/${assessment._id}/questions`}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                  >
+                    Manage Questions
+                  </Link>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {assessment.status === "draft" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(assessment._id, "published")
+                        }
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                      >
+                        Publish
+                      </button>
+                    )}
+
+                    {assessment.status === "published" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(assessment._id, "closed")
+                        }
+                        className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+                      >
+                        Close
+                      </button>
+                    )}
+
+                    {assessment.status === "closed" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(assessment._id, "published")
+                        }
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                      >
+                        Reopen
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleDelete(assessment._id)}
+                      className="text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -171,3 +257,4 @@ function AssessmentList() {
 }
 
 export default AssessmentList;
+
