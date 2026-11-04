@@ -1,14 +1,16 @@
 
 const express = require("express");
 const router = express.Router();
-
 const {
     addQuestion,
+    addMultipleQuestions,
     getAssessmentQuestions,
+    getCandidateQuestions,
     getQuestionById,
     updateQuestion,
     deleteQuestion
 } = require("../controllers/question.controller");
+
 
 const {
     createAssessment,
@@ -70,14 +72,33 @@ router.post(
     addQuestion
 );
 
-// Get All Questions of an Assessment - Recruiter Only
+// Add Multiple Questions - Recruiter Only
+router.post(
+    "/:assessmentId/questions/bulk",
+    protect,
+    authorizeRoles("recruiter"),
+    addMultipleQuestions
+);
+
+// Get Questions Based on User Role
 router.get(
     "/:assessmentId/questions",
     protect,
-    authorizeRoles("recruiter"),
-    getAssessmentQuestions
-);
+    (req, res, next) => {
+        if (req.user.role === "candidate") {
+            return getCandidateQuestions(req, res, next);
+        }
 
+        if (req.user.role === "recruiter") {
+            return getAssessmentQuestions(req, res, next);
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: "Access denied"
+        });
+    }
+);
 // Get Single Question - Recruiter Only
 router.get(
     "/:assessmentId/questions/:questionId",

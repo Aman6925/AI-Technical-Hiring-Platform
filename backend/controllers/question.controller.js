@@ -111,6 +111,133 @@ const addQuestion = async (req, res) => {
     }
 };
 
+
+// Add Multiple Questions to Assessment (Bulk Upload)
+const addMultipleQuestions = async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+        const { questions } = req.body;
+
+        // Validate Assessment ID
+        if (!mongoose.Types.ObjectId.isValid(assessmentId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid assessment ID"
+            });
+        }
+
+        // Validate questions array
+        if (
+            !Array.isArray(questions) ||
+            questions.length === 0 ||
+            questions.length > 50
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Provide between 1 and 50 questions"
+            });
+        }
+
+        // Check Assessment Ownership
+        const assessment = await Assessment.findOne({
+            _id: assessmentId,
+            createdBy: req.user._id
+        });
+
+        if (!assessment) {
+            return res.status(404).json({
+                success: false,
+                message: "Assessment not found or access denied"
+            });
+        }
+
+        // Validate every question before inserting
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+
+            if (
+                !q.questionText ||
+                typeof q.questionText !== "string" ||
+                !q.questionText.trim() ||
+                !["mcq", "coding"].includes(q.questionType) ||
+                !Number.isInteger(q.marks) ||
+                q.marks < 1
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid data in question ${i + 1}`
+                });
+            }
+
+            if (
+                q.difficulty !== undefined &&
+                !["easy", "medium", "hard"].includes(q.difficulty)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid difficulty in question ${i + 1}`
+                });
+            }
+
+            if (q.questionType === "mcq") {
+                if (
+                    !Array.isArray(q.options) ||
+                    q.options.length < 2 ||
+                    q.options.some(
+                        option =>
+                            typeof option !== "string" ||
+                            !option.trim()
+                    ) ||
+                    typeof q.correctAnswer !== "string" ||
+                    !q.correctAnswer.trim() ||
+                    !q.options.some(
+                        option => option.trim() === q.correctAnswer.trim()
+                    )
+                ) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Invalid MCQ options or answer in question ${i + 1}`
+                    });
+                }
+            }
+        }
+
+        // Prepare questions for database
+        const questionDocuments = questions.map(q => ({
+            assessment: assessmentId,
+            questionText: q.questionText.trim(),
+            questionType: q.questionType,
+            options: q.questionType === "mcq" ? q.options : [],
+            correctAnswer:
+                q.questionType === "mcq" ? q.correctAnswer.trim() : null,
+            marks: q.marks,
+            difficulty: q.difficulty || "medium",
+            explanation: q.explanation || ""
+        }));
+
+        // Insert all questions together
+        const savedQuestions = await Question.insertMany(
+            questionDocuments
+        );
+
+        return res.status(201).json({
+            success: true,
+            message: "Questions added successfully",
+            count: savedQuestions.length,
+            questions: savedQuestions
+        });
+
+    } catch (error) {
+        console.error("Bulk Add Questions Error:", error.message);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
+
 // Get All Questions of an Assessment
 const getAssessmentQuestions = async (req, res) => {
     try {
@@ -434,10 +561,61 @@ const deleteQuestion = async (req, res) => {
     }
 };
 
+// Get Questions for Candidate (Without Correct Answers)
+const getCandidateQuestions = async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+
+        // Validate Assessment ID
+        if (!mongoose.Types.ObjectId.isValid(assessmentId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid assessment ID"
+            });
+        }
+
+        // Check whether assessment is published
+        const assessment = await Assessment.findOne({
+            _id: assessmentId,
+            status: "published"
+        });
+
+        if (!assessment) {
+            return res.status(404).json({
+                success: false,
+                message: "Published assessment not found"
+            });
+        }
+
+        // Fetch questions without correct answers or explanations
+        const questions = await Question.find({
+            assessment: assessmentId
+        })
+            .select("-correctAnswer -explanation")
+            .sort({ createdAt: 1 });
+
+        res.status(200).json({
+            success: true,
+            count: questions.length,
+            questions
+        });
+
+    } catch (error) {
+        console.error("Get Candidate Questions Error:", error.message);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
 module.exports = {
     addQuestion,
+    addMultipleQuestions,
     getAssessmentQuestions,
     getQuestionById,
     updateQuestion,
-    deleteQuestion
+    deleteQuestion,
+    getCandidateQuestions
 };

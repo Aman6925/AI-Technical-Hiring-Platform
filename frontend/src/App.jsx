@@ -10,6 +10,8 @@ import EditAssessment from "./pages/recruiter/EditAssessment";
 import CreateQuestion from "./pages/recruiter/CreateQuestion";
 import QuestionList from "./pages/recruiter/QuestionList";
 import EditQuestion from "./pages/recruiter/EditQuestion";
+import AssessmentDetails from "./pages/candidate/AssessmentDetails";
+import AssessmentAttempt from "./pages/candidate/AssessmentAttempt";
 
 function Home() {
   return (
@@ -85,10 +87,28 @@ function App() {
       />
 
       <Route
+        path="/candidate/assessments/:assessmentId/attempt/:submissionId"
+        element={
+          <ProtectedRoute allowedRoles={["candidate"]}>
+            <AssessmentAttempt />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/candidate/dashboard"
         element={
           <ProtectedRoute allowedRoles={["candidate"]}>
             <CandidateDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/candidate/assessments/:assessmentId"
+        element={
+          <ProtectedRoute allowedRoles={["candidate"]}>
+            <AssessmentDetails />
           </ProtectedRoute>
         }
       />

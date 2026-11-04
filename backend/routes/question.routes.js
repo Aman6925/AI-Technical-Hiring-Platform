@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const {
-    addQuestion
+    addQuestion,
+    getCandidateQuestions
 } = require("../controllers/question.controller");
 
 const {
@@ -16,6 +17,14 @@ router.post(
     protect,
     authorizeRoles("recruiter"),
     addQuestion
+);
+
+// Get Questions - Candidate Only
+router.get(
+    "/:assessmentId/questions",
+    protect,
+    authorizeRoles("candidate"),
+    getCandidateQuestions
 );
 
 module.exports = router;
