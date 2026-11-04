@@ -61,6 +61,11 @@ const submissionSchema = new mongoose.Schema(
             default: Date.now
         },
 
+        expiresAt: {
+            type: Date,
+            default: null
+        },
+
         submittedAt: {
             type: Date,
             default: null
@@ -76,7 +81,7 @@ const submissionSchema = new mongoose.Schema(
     }
 );
 
-// Prevent duplicate active/completed attempts for the same candidate
+// Prevent duplicate attempts for the same candidate and assessment
 submissionSchema.index(
     { assessment: 1, candidate: 1 },
     { unique: true }

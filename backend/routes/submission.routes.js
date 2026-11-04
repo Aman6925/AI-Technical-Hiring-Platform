@@ -4,6 +4,8 @@ const router = express.Router();
 
 const {
     startAssessment,
+    getAssessmentAttempt,
+    saveAnswer,
     submitAssessment
 } = require("../controllers/submission.controller");
 
@@ -12,7 +14,7 @@ const {
     authorizeRoles
 } = require("../middleware/auth.middleware");
 
-// Start Assessment - Candidate Only
+// Start Assessment
 router.post(
     "/:assessmentId/start",
     protect,
@@ -20,7 +22,23 @@ router.post(
     startAssessment
 );
 
-// Submit Assessment - Candidate Only
+// Get Attempt Details and Remaining Time
+router.get(
+    "/:submissionId/attempt",
+    protect,
+    authorizeRoles("candidate"),
+    getAssessmentAttempt
+);
+
+// Save Candidate Answer
+router.patch(
+    "/:submissionId/answer",
+    protect,
+    authorizeRoles("candidate"),
+    saveAnswer
+);
+
+// Submit Assessment
 router.post(
     "/:submissionId/submit",
     protect,
