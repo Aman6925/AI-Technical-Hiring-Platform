@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   FileText,
-  Trash2,
   PlusCircle,
-  Pencil,
+  BarChart3,
 } from "lucide-react";
+
 
 import {
   getAssessments,
@@ -184,6 +184,14 @@ function AssessmentList() {
                 </div>
 
                 <div className="border-t mt-6 pt-4 flex flex-wrap justify-between items-center gap-3">
+                  <Link
+                    to={`/recruiter/assessments/${assessment._id}/results`}
+                    className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700"
+                  >
+                    <BarChart3 size={18} />
+                    View Results
+                  </Link>
+                  
                   <Link
                     to={`/recruiter/assessments/${assessment._id}/edit`}
                     className="text-blue-600 hover:text-blue-800 font-medium"

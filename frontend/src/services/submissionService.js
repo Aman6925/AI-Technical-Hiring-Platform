@@ -44,3 +44,12 @@ export const submitAssessment = async (submissionId, answers) => {
 
     return response.data;
 };
+
+// Get Assessment Results (Recruiter)
+export const getAssessmentResults = async (assessmentId) => {
+    const response = await api.get(
+        `/submissions/${assessmentId}/results`
+    );
+
+    return response.data;
+};

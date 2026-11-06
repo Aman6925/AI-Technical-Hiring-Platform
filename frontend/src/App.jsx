@@ -12,6 +12,7 @@ import QuestionList from "./pages/recruiter/QuestionList";
 import EditQuestion from "./pages/recruiter/EditQuestion";
 import AssessmentDetails from "./pages/candidate/AssessmentDetails";
 import AssessmentAttempt from "./pages/candidate/AssessmentAttempt";
+import AssessmentResults from "./pages/recruiter/AssessmentResults";
 
 function Home() {
   return (
@@ -136,6 +137,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["recruiter"]}>
             <EditQuestion />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/recruiter/assessments/:assessmentId/results"
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]}>
+            <AssessmentResults />
           </ProtectedRoute>
         }
       />

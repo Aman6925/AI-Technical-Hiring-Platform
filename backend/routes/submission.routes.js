@@ -6,8 +6,11 @@ const {
     startAssessment,
     getAssessmentAttempt,
     saveAnswer,
-    submitAssessment
+    submitAssessment,
+    getAssessmentResults,
+    getMyAssessmentResults
 } = require("../controllers/submission.controller");
+
 
 const {
     protect,
@@ -44,6 +47,22 @@ router.post(
     protect,
     authorizeRoles("candidate"),
     submitAssessment
+);
+
+// Recruiter: Get results for an assessment
+router.get(
+    "/:assessmentId/results",
+    protect,
+    authorizeRoles("recruiter"),
+    getAssessmentResults
+);
+
+// Candidate's Personal Assessment Results
+router.get(
+    "/my-results",
+    protect,
+    authorizeRoles("candidate"),
+    getMyAssessmentResults
 );
 
 module.exports = router;

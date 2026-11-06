@@ -513,9 +513,173 @@ const submitAssessment = async (req, res) => {
     }
 };
 
+
+// Get results for a recruiter's assessment
+const getAssessmentResults = async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+
+        // Validate assessment ID
+        if (!mongoose.Types.ObjectId.isValid(assessmentId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid assessment ID"
+            });
+        }
+
+        // Find assessment owned by this recruiter
+        const assessment = await Assessment.findOne({
+            _id: assessmentId,
+            createdBy: req.user._id
+        });
+
+        if (!assessment) {
+            return res.status(404).json({
+                success: false,
+                message: "Assessment not found or access denied"
+            });
+        }
+
+        // Fetch submissions and candidate details
+        const submissions = await Submission.find({
+            assessment: assessmentId
+        })
+            .populate("candidate", "name email")
+            .sort({ submittedAt: -1 });
+
+        const results = submissions.map((submission) => {
+            const totalMarks = submission.totalMarks || assessment.totalMarks;
+            const marksObtained = submission.marksObtained || 0;
+
+            return {
+                submissionId: submission._id,
+                candidate: submission.candidate,
+                assessmentTitle: assessment.title,
+                marksObtained,
+                totalMarks,
+                percentage: totalMarks > 0
+                    ? Number(((marksObtained / totalMarks) * 100).toFixed(2))
+                    : 0,
+                status: submission.status,
+                submittedAt: submission.submittedAt
+            };
+        });
+
+        return res.status(200).json({
+            success: true,
+            assessment: {
+                _id: assessment._id,
+                title: assessment.title,
+                totalMarks: assessment.totalMarks
+            },
+            count: results.length,
+            results
+        });
+
+    } catch (error) {
+        console.error("Get Assessment Results Error:", error.message);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
+// Get logged-in candidate's personal assessment results
+const getMyAssessmentResults = async (req, res) => {
+    try {
+        const candidateId = req.user._id;
+
+        // Fetch only this candidate's submissions
+        const submissions = await Submission.find({
+            candidate: candidateId
+        })
+            .populate(
+                "assessment",
+                "title totalMarks passingMarks"
+            )
+            .sort({ submittedAt: -1 });
+
+        const results = submissions.map((submission) => {
+            const assessment = submission.assessment;
+
+            const totalMarks =
+                submission.totalMarks || assessment?.totalMarks || 0;
+
+            const passingMarks = assessment?.passingMarks ?? 0;
+
+            const marksObtained = submission.marksObtained ?? 0;
+
+            const percentage =
+                totalMarks > 0
+                    ? Number(
+                        ((marksObtained / totalMarks) * 100).toFixed(2)
+                    )
+                    : 0;
+
+            const passStatus =
+                submission.status === "evaluated"
+                    ? marksObtained >= passingMarks
+                        ? "passed"
+                        : "failed"
+                    : "pending";
+
+            return {
+                submissionId: submission._id,
+                assessmentTitle: assessment?.title || "Assessment",
+                marksObtained,
+                totalMarks,
+                passingMarks,
+                percentage,
+                passStatus,
+                status: submission.status,
+                submittedAt: submission.submittedAt
+            };
+        });
+
+        const evaluatedResults = results.filter(
+            (item) => item.status === "evaluated"
+        );
+
+        const averageScore = evaluatedResults.length
+            ? Number(
+                (
+                    evaluatedResults.reduce(
+                        (sum, item) => sum + item.percentage,
+                        0
+                    ) / evaluatedResults.length
+                ).toFixed(2)
+            )
+            : 0;
+
+        return res.status(200).json({
+            success: true,
+            count: results.length,
+            completedCount: evaluatedResults.length,
+            pendingCount: results.filter(
+                (item) => item.status === "in-progress"
+            ).length,
+            averageScore,
+            results
+        });
+
+    } catch (error) {
+        console.error("Get Candidate Results Error:", error.message);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch candidate results."
+        });
+    }
+};
+
+
 module.exports = {
     startAssessment,
     getAssessmentAttempt,
     saveAnswer,
-    submitAssessment
+    submitAssessment,
+    getAssessmentResults,
+    getMyAssessmentResults
 };
